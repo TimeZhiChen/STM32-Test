@@ -31,7 +31,8 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "led.h"
+#include "key.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -61,6 +62,12 @@ void Error_Handler(void);
 #define LED1_GPIO_Port GPIOA
 #define LED2_Pin GPIO_PIN_2
 #define LED2_GPIO_Port GPIOA
+#define KEY1_Pin GPIO_PIN_14
+#define KEY1_GPIO_Port GPIOB
+#define KEY1_EXTI_IRQn EXTI15_10_IRQn
+#define KEY2_Pin GPIO_PIN_8
+#define KEY2_GPIO_Port GPIOA
+#define KEY2_EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 
