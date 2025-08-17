@@ -19,6 +19,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+#include "led.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -95,8 +97,13 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
+    led1(1);
+    led2(1);
+    HAL_Delay(500);
+    led1(0);
+    led2(0);
+    HAL_Delay(500);
   }
   /* USER CODE END 3 */
 }
