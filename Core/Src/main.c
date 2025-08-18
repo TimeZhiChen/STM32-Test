@@ -18,15 +18,13 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
-#include <stdio.h>
-
+#include "iwdg.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,31 +57,39 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-uint8_t TX_DATA[] ="ƒ„∫√£¨Õ®—∂≥…π¶°£";
+uint8_t TX_DATA[] ="Send Data Successfully!\r\n";
 uint8_t RX_DATA[4];
+uint8_t RX_CpltFlag ;//‰∏≠Êñ≠Ê†áÂøó
+uint8_t RX_Status ;//‰∏≠Êñ≠Áä∂ÊÄÅ
+
+
+int __io_putchar(int ch) {
+  HAL_UART_Transmit(&huart1, (uint8_t*)&ch, 1,1000);
+  return ch;
+}
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  HAL_Delay(20);  // ºÚµ•µƒ»Ìº˛œ˚∂∂
+  HAL_Delay(20);
   if (GPIO_Pin == KEY1_Pin && HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) == GPIO_PIN_RESET) {
-    while (HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) == GPIO_PIN_RESET);  // µ»¥˝∞¥º¸ Õ∑≈
+    while (HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) == GPIO_PIN_RESET);
     led_toggle(1);
   }
   else if (GPIO_Pin == KEY2_Pin && HAL_GPIO_ReadPin(KEY2_GPIO_Port, KEY2_Pin) == GPIO_PIN_RESET) {
-    while (HAL_GPIO_ReadPin(KEY2_GPIO_Port, KEY2_Pin) == GPIO_PIN_RESET);  // µ»¥˝∞¥º¸ Õ∑≈
+    while (HAL_GPIO_ReadPin(KEY2_GPIO_Port, KEY2_Pin) == GPIO_PIN_RESET);
     led_toggle(2);
   }
 }
 
-/**
-  * @brief  ÷ÿ∂®œÚprintf∫Ø ˝µƒ◊÷∑˚ ‰≥ˆµΩUART
-  * @param  ch: “™∑¢ÀÕµƒ◊÷∑˚
-  * @retval ∑µªÿ∑¢ÀÕµƒ◊÷∑˚
-  */
-int __io_putchar(int ch) {
-  HAL_UART_Transmit(&huart1, (uint8_t*)&ch, 1, 1000);  // Õ®π˝UART1∑¢ÀÕ“ª∏ˆ◊÷∑˚
-  return ch;  // ∑µªÿ“—∑¢ÀÕµƒ◊÷∑˚
-}
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+  if (huart->Instance == USART1) {
+    led_toggle(1);
+    HAL_UART_Transmit_IT(&huart1, RX_DATA, sizeof(RX_DATA));
+    RX_Status = HAL_UART_Receive_IT(&huart1, RX_DATA, sizeof(RX_DATA));
+  }
+  }
+
+
 
 /* USER CODE END 0 */
 
@@ -118,19 +124,39 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
+  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Transmit(&huart1,TX_DATA,sizeof(TX_DATA),1000);
+  HAL_UART_Receive_IT(&huart1,RX_DATA,sizeof(RX_DATA));
+  //Ê£ÄÊµãÂ§ç‰Ωç
+  if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST) != RESET) {
+    printf("IWDOG Rest!\r\n");
+    __HAL_RCC_CLEAR_RESET_FLAGS();//Ê∏ÖÈô§Â§ç‰ΩçÊ†áÂøó
+  } else {
+    printf("Other Rest!\r\n");
+  }
   /* USER CODE END 2 */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
-    HAL_UART_Receive(&huart1,RX_DATA,sizeof(RX_DATA),HAL_MAX_DELAY);
-    printf("RX_DATA:0x%02X-0x%02X-0x%02X-0x%02X\r\n", RX_DATA[0], RX_DATA[1], RX_DATA[2], RX_DATA[3]);
-    printf("¥Æø⁄Õ®—∂:%.2f\r\n",0.25f);
+
+    // if ((RX_CpltFlag == 1)&&(RX_Status != HAL_BUSY)) {
+    //   for (int i = 0; i < sizeof(RX_DATA); i++) {
+    //     printf("RX_DATA[%d]:0x%02x\r\n", i, RX_DATA[i]);
+    //
+    //     }
+    //   printf("\r\n");
+    //   RX_CpltFlag = 0;
+    // }
     led_toggle(1);
+    HAL_Delay(800);
+    led_toggle(2);
+    HAL_IWDG_Refresh(&hiwdg);
+
   }
   /* USER CODE END 3 */
 }
@@ -147,10 +173,11 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
