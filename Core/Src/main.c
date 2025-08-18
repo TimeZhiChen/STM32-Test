@@ -18,6 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
+#include <stdio.h>
+
 #include "usart.h"
 #include "gpio.h"
 
@@ -55,17 +58,31 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+uint8_t TX_DATA[] ="你好，通讯成功。";
+uint8_t RX_DATA[4];
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  HAL_Delay(20);  // 绠�鍗曠殑杞欢娑堟姈
+  HAL_Delay(20);  // 简单的软件消抖
   if (GPIO_Pin == KEY1_Pin && HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) == GPIO_PIN_RESET) {
-    while (HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) == GPIO_PIN_RESET);  // 绛夊緟鎸夐敭閲婃斁
+    while (HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) == GPIO_PIN_RESET);  // 等待按键释放
     led_toggle(1);
   }
   else if (GPIO_Pin == KEY2_Pin && HAL_GPIO_ReadPin(KEY2_GPIO_Port, KEY2_Pin) == GPIO_PIN_RESET) {
-    while (HAL_GPIO_ReadPin(KEY2_GPIO_Port, KEY2_Pin) == GPIO_PIN_RESET);  // 绛夊緟鎸夐敭閲婃斁
+    while (HAL_GPIO_ReadPin(KEY2_GPIO_Port, KEY2_Pin) == GPIO_PIN_RESET);  // 等待按键释放
     led_toggle(2);
   }
+}
+
+/**
+  * @brief  重定向printf函数的字符输出到UART
+  * @param  ch: 要发送的字符
+  * @retval 返回发送的字符
+  */
+int __io_putchar(int ch) {
+  HAL_UART_Transmit(&huart1, (uint8_t*)&ch, 1, 1000);  // 通过UART1发送一个字符
+  return ch;  // 返回已发送的字符
 }
 
 /* USER CODE END 0 */
@@ -78,6 +95,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+
 
   /* USER CODE END 1 */
 
@@ -101,18 +119,18 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_UART_Transmit(&huart1,TX_DATA,sizeof(TX_DATA),1000);
   /* USER CODE END 2 */
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
-
-
+    HAL_UART_Receive(&huart1,RX_DATA,sizeof(RX_DATA),HAL_MAX_DELAY);
+    printf("RX_DATA:0x%02X-0x%02X-0x%02X-0x%02X\r\n", RX_DATA[0], RX_DATA[1], RX_DATA[2], RX_DATA[3]);
+    printf("串口通讯:%.2f\r\n",0.25f);
+    led_toggle(1);
   }
   /* USER CODE END 3 */
 }
