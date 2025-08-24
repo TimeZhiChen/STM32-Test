@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "iwdg.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -89,7 +90,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
   }
   }
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+  if (htim->Instance == TIM2) {
+    led_toggle(2);
+  }
 
+}
 
 /* USER CODE END 0 */
 
@@ -125,8 +131,10 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_IWDG_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   HAL_UART_Receive_IT(&huart1,RX_DATA,sizeof(RX_DATA));
+
   //检测复位
   if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST) != RESET) {
     printf("IWDOG Rest!\r\n");
@@ -134,6 +142,8 @@ int main(void)
   } else {
     printf("Other Rest!\r\n");
   }
+
+  HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -141,9 +151,10 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
 
+
+    //串口打印
     // if ((RX_CpltFlag == 1)&&(RX_Status != HAL_BUSY)) {
     //   for (int i = 0; i < sizeof(RX_DATA); i++) {
     //     printf("RX_DATA[%d]:0x%02x\r\n", i, RX_DATA[i]);
@@ -152,10 +163,11 @@ int main(void)
     //   printf("\r\n");
     //   RX_CpltFlag = 0;
     // }
-    led_toggle(1);
-    HAL_Delay(800);
-    led_toggle(2);
-    HAL_IWDG_Refresh(&hiwdg);
+
+
+
+    //独立看门狗实验
+     HAL_IWDG_Refresh(&hiwdg);//喂狗
 
   }
   /* USER CODE END 3 */
