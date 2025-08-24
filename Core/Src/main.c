@@ -155,7 +155,7 @@ int main(void)
   MX_IWDG_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
+  OLED_Init();
   // HAL_UART_Receive_DMA(&huart1,RX_DATA,sizeof(RX_DATA));
 
   // 启动UART1的空闲中断DMA接收，用于接收不定长数据
@@ -182,6 +182,9 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
+    OLED_Clear();
+    OLED_ShowNum(0, 0, 1234567890, 10,OLED_8X16);
+    OLED_Update();
 
     //串口打印
     // if ((RX_CpltFlag == 1)&&(RX_Status != HAL_BUSY)) {
