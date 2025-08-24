@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "iwdg.h"
 #include "tim.h"
 #include "usart.h"
@@ -26,6 +27,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+
+#include "stm32f1xx_hal_usart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +62,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 uint8_t TX_DATA[] ="Send Data Successfully!\r\n";
-uint8_t RX_DATA[4];
+uint8_t RX_DATA[100];
 uint8_t RX_CpltFlag ;//中断标志
 uint8_t RX_Status ;//中断状态
 
@@ -85,14 +88,32 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
   if (huart->Instance == USART1) {
     led_toggle(1);
-    HAL_UART_Transmit_IT(&huart1, RX_DATA, sizeof(RX_DATA));
-    RX_Status = HAL_UART_Receive_IT(&huart1, RX_DATA, sizeof(RX_DATA));
+    HAL_UART_Transmit_DMA(&huart1, RX_DATA, sizeof(RX_DATA));
+    RX_Status = HAL_UART_Receive_DMA(&huart1, RX_DATA, sizeof(RX_DATA));
   }
-  }
+}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if (htim->Instance == TIM2) {
     led_toggle(2);
+  }
+
+}
+
+/**
+  * @brief  UART Rx Event Callback，用于处理UART接收完成事件
+  * @param  huart: UART handle pointer
+  * @param  Size: 接收到的数据大小
+  * @retval None
+  */
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+  if (huart == &huart1) {
+    HAL_UART_Transmit_DMA(&huart1, RX_DATA, Size);
+    // 重新启动接收，以便继续接收下一批数据
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart1, RX_DATA, sizeof(RX_DATA));
+
+    // 禁用DMA接收半传输中断，避免不必要的中断处理
+    __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
   }
 
 }
@@ -129,11 +150,18 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_IWDG_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart1,RX_DATA,sizeof(RX_DATA));
+
+  // HAL_UART_Receive_DMA(&huart1,RX_DATA,sizeof(RX_DATA));
+
+  // 启动UART1的空闲中断DMA接收，用于接收不定长数据
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart1,RX_DATA,sizeof(RX_DATA));
+  // 禁用DMA接收半传输中断，避免不必要的中断处理
+  __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
 
   //检测复位
   if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST) != RESET) {
@@ -151,6 +179,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
 
 
