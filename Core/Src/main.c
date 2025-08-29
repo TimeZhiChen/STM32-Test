@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 #include "dma.h"
 #include "iwdg.h"
 #include "tim.h"
@@ -54,6 +55,7 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -93,12 +95,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
   }
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-  if (htim->Instance == TIM2) {
-    led_toggle(2);
-  }
 
-}
 
 /**
   * @brief  UART Rx Event Callback，用于处理UART接收完成事件
@@ -155,7 +152,7 @@ int main(void)
   MX_IWDG_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  OLED_Init();
+
   // HAL_UART_Receive_DMA(&huart1,RX_DATA,sizeof(RX_DATA));
 
   // 启动UART1的空闲中断DMA接收，用于接收不定长数据
@@ -174,6 +171,15 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
+  /* Init scheduler */
+  osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
+  MX_FREERTOS_Init();
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -182,9 +188,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-    OLED_Clear();
-    OLED_ShowNum(0, 0, 1234567890, 10,OLED_8X16);
-    OLED_Update();
+
 
     //串口打印
     // if ((RX_CpltFlag == 1)&&(RX_Status != HAL_BUSY)) {
@@ -198,8 +202,7 @@ int main(void)
 
 
 
-    //独立看门狗实验
-     HAL_IWDG_Refresh(&hiwdg);//喂狗
+
 
   }
   /* USER CODE END 3 */
@@ -248,6 +251,28 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM4 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM4)
+  {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

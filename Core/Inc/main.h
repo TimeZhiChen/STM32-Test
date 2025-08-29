@@ -34,6 +34,7 @@ extern "C" {
 #include "led.h"
 #include "key.h"
 #include "OLED.h"
+#include "iwdg.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
