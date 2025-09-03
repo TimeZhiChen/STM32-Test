@@ -51,6 +51,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         Drivers/BSP/KEY/key.c
         Drivers/BSP/OLED/OLED.c
         Drivers/BSP/OLED/OLED_Data.c
+        Drivers/BSP/LCD/lcd.c
 )
 
 # Add include paths
@@ -59,6 +60,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         Drivers/BSP/LED
         Drivers/BSP/KEY
         Drivers/BSP/OLED
+        Drivers/BSP/LCD
 )
 
 # Add project symbols (macros)
