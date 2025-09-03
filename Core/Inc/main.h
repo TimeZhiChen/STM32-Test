@@ -34,7 +34,8 @@ extern "C" {
 #include "led.h"
 #include "key.h"
 #include "OLED.h"
-#include "iwdg.h"
+#include "spi.h"
+#include "lcd.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -64,6 +65,14 @@ void Error_Handler(void);
 #define LED1_GPIO_Port GPIOA
 #define LED2_Pin GPIO_PIN_2
 #define LED2_GPIO_Port GPIOA
+#define TFT_RES_Pin GPIO_PIN_4
+#define TFT_RES_GPIO_Port GPIOA
+#define TFT_DC_Pin GPIO_PIN_6
+#define TFT_DC_GPIO_Port GPIOA
+#define TFT_CS_Pin GPIO_PIN_0
+#define TFT_CS_GPIO_Port GPIOB
+#define TFT_BLK_Pin GPIO_PIN_1
+#define TFT_BLK_GPIO_Port GPIOB
 #define KEY1_Pin GPIO_PIN_14
 #define KEY1_GPIO_Port GPIOB
 #define KEY1_EXTI_IRQn EXTI15_10_IRQn
