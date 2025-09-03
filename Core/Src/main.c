@@ -175,6 +175,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   LCD_Init();
 
+
   while (1)
   {
     /* USER CODE END WHILE */
